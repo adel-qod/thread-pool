@@ -55,7 +55,7 @@ It may return any of the following  */
 int initThreadPool(unsigned int numberOfThreads)
 {
 	threadPoolSize = numberOfThreads;
-	
+	busyThreadsCount = 0;
 	threadsArray = malloc(numberOfThreads * sizeof(pthread_t));
 	if(threadsArray == NULL)
 		return INIT_OUT_OF_MEMORY;
@@ -96,6 +96,7 @@ int startJob(void* (*jobFunction)(void *data), void *parameter)
 		pthread_mutex_unlock(&busyThreadsCountMutex);
 		return NO_AVAILABLE_THREADS;
 	}
+	busyThreadsCount++;
 	pthread_mutex_unlock(&busyThreadsCountMutex);
 	jobFunctionPointer = jobFunction;
 	data = parameter;
@@ -119,10 +120,6 @@ static void* waitingFunction(void *par)
 		/* Check the man pages for the pthread_mutex_lock
 		there's (ALMOST) 0 chance these functions may fail so 
 		there's no sense in checking their error codes */	
-
-		pthread_mutex_lock(&busyThreadsCountMutex);
-		busyThreadsCount++;
-		pthread_mutex_unlock(&busyThreadsCountMutex);
 
 		jobFunctionPointer(data);/* finish job and get back to pool */
 

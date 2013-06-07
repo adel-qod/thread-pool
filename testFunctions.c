@@ -18,23 +18,20 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 interface, that is, they all return (void*) and take (void*)
 The functions will be divided in two groups, atomic and shared-variable
 
-Atomic functions perform an operation on a local data for a deterministic time
-
-Shared-variable functions perform an operation on a shared variable for a determinstic time
-
-
 Times may vary from one machine to another, these are being tested on Linux
 Kernel 3.2.0; the cpu: i5 3210M, but the amount of time they spend should be
 relative to what's pointed out here	
  */
+#include <pthread.h>
+#include <unistd.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <stdbool.h>
 
-/* Atomic group begins */
-/*****************************************************************************/
 #define TEN_SEC_SIZE (1024 * 60)
-/* foo10Secs begins */
+/* begin foo10Secs */
 void *foo10Secs(void *data)
 {
 	assert(data == NULL);
@@ -45,11 +42,50 @@ void *foo10Secs(void *data)
 		for(int j = 0; j < TEN_SEC_SIZE; j++)
 			if(arr[i] == 255)
 				printf("bug\n");
-	free(arr);	
+	free(arr);
+	printf("Thread has finished executing\n");	
 	return NULL;
 }
-/* foo10Secs ends */
+/* end foo10Secs */
 
+/* begin fooCounter */
+void* fooCounter(void *data)
+{
+	assert(data == NULL);
+	printf("\n");
+	sleep((rand()%5));
+	for(int i = 0; i < 10; i++)
+	{
+		/* Note the following line is not portable
+		the standard doesn't say that pthread_t should be
+		unsigned long or anything at all
+		but it's okay since this is a test function and not the 
+		pool itself */
+		printf("thread: %lu\t counter = %d\n", pthread_self(), i);
+		sleep(rand()%2);
+	}
+	return NULL;
+}
+/* end fooCounter */
 
-/*****************************************************************************/
-/* Atomic group ends */
+/* begin countTo10000 */
+extern pthread_mutex_t mutex;
+static int counter;
+void *countTo10000(void *data)
+{
+	sleep(2);
+	assert(data == NULL);
+	while(true)
+	{
+		pthread_mutex_lock(&mutex);
+		if(counter == 10000)
+			break;
+		counter++;
+		pthread_mutex_unlock(&mutex);
+		sleep(1);	
+	}
+	printf("counter = %d\n", counter);
+	pthread_mutex_unlock(&mutex);
+	return NULL;
+}
+/* end countTo10000 */
