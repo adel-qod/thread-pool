@@ -101,7 +101,7 @@ int startJob(void* (*jobFunction)(void *data), void *parameter)
 	data = parameter;
 	if(sem_post(&poolControlSemaphore) < 0)
 		return START_JOB_SYNC_FAILURE;
-	retur START_JOB_SUCCESS;
+	return START_JOB_SUCCESS;
 }
 /* end startJob */
 
