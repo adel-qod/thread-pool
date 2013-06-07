@@ -35,7 +35,7 @@ static pthread_t *threadsArray;/* our threads of the pool */
 static unsigned int threadPoolSize;
 static unsigned int busyThreadsCount;/* counts how many threads are busy */
 static sem_t poolControlSemaphore;/* Used to make threads idle or do a job */
-static pthread_mutex_t *busyThreadsCountMutex;/* protects busyThreadsCount */
+static pthread_mutex_t busyThreadsCountMutex;/* protects busyThreadsCount */
 
 /* a function pointer to a function that returns void* and takes *void
 this function pointer is used by threads to start the job they're given*/
@@ -66,7 +66,7 @@ int initThreadPool(unsigned int numberOfThreads)
 		free(threadsArray);
 		return INIT_SYNC_FAILURE;
 	}
-
+	pthread_mutex_init(&busyThreadsCountMutex, NULL);/*CHECK ERRORS*/
 	for(unsigned int i = 0; i < numberOfThreads; i++)
 	{/* start all threads and send them to the waiting function */
 		if(pthread_create(&threadsArray[i], NULL, waitingFunction,
@@ -90,13 +90,13 @@ int initThreadPool(unsigned int numberOfThreads)
 #define START_JOB_SYNC_FAILURE 300
 int startJob(void* (*jobFunction)(void *data), void *parameter)
 {
-	pthread_mutex_lock(busyThreadsCountMutex);
+	pthread_mutex_lock(&busyThreadsCountMutex);
 	if(busyThreadsCount == threadPoolSize)
 	{
-		pthread_mutex_unlock(busyThreadsCountMutex);
+		pthread_mutex_unlock(&busyThreadsCountMutex);
 		return NO_AVAILABLE_THREADS;
 	}
-	pthread_mutex_unlock(busyThreadsCountMutex);
+	pthread_mutex_unlock(&busyThreadsCountMutex);
 	jobFunctionPointer = jobFunction;
 	data = parameter;
 	if(sem_post(&poolControlSemaphore) < 0)
@@ -120,15 +120,15 @@ static void* waitingFunction(void *par)
 		there's (ALMOST) 0 chance these functions may fail so 
 		there's no sense in checking their error codes */	
 
-		pthread_mutex_lock(busyThreadsCountMutex);
+		pthread_mutex_lock(&busyThreadsCountMutex);
 		busyThreadsCount++;
-		pthread_mutex_unlock(busyThreadsCountMutex);
+		pthread_mutex_unlock(&busyThreadsCountMutex);
 
 		jobFunctionPointer(data);/* finish job and get back to pool */
 
-		pthread_mutex_lock(busyThreadsCountMutex);
+		pthread_mutex_lock(&busyThreadsCountMutex);
 		busyThreadsCount--;
-		pthread_mutex_unlock(busyThreadsCountMutex);
+		pthread_mutex_unlock(&busyThreadsCountMutex);
 		
 	}
 	return NULL;/* To avoid warnings, but this is not reachable */
