@@ -92,7 +92,10 @@ int startJob(void* (*jobFunction)(void *data), void *parameter)
 {
 	pthread_mutex_lock(busyThreadsCountMutex);
 	if(busyThreadsCount == threadPoolSize)
+	{
+		pthread_mutex_unlock(busyThreadsCountMutex);
 		return NO_AVAILABLE_THREADS;
+	}
 	pthread_mutex_unlock(busyThreadsCountMutex);
 	jobFunctionPointer = jobFunction;
 	data = parameter;
@@ -105,7 +108,7 @@ int startJob(void* (*jobFunction)(void *data), void *parameter)
 /* begin waitingFunction */
 static void* waitingFunction(void *par)
 {
-	par = NULL;/* just to avoid an ugly warning */
+	par = NULL;/* just to avoid an ugly compiler warning */
 	while(true)
 	{
 		/* The only likely failure that can happen here is if the call
