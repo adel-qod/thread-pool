@@ -1,0 +1,32 @@
+The pool works using the following aglorithm:
+
+A user initiates the pool by giving it the number of threads it should contain:
+	-First, we create a semaphore and set it to 0 (locked)
+	-We create all threads and send them to the waiting-function
+	-In the waiting function, in an infinite loop, all threads wait
+		on the semaphore
+	All threads will remain like this for the time being
+
+When a user requests a job, they should send a function pointer and a parameter:
+	-First, if all threads are busy, we fail gracefully
+	-We set a global function pointer to be the passed function pointer
+	-We set a gloabl void* pointer to equal the parameter passed
+	-We then icrement the semaphore by one, which will allow exactly one
+		blocking thread to go on
+
+The blocking thread that was allowed to go on will simply call the global 
+function pointer and give it the global void* as a parameter, when this call is
+over, the thread will iterate our infinite loop and block at semaphore wait
+
+Note that to check how many threads are busy, we keep a counter that gets 
+incremented everytime a thread leaves the semaphore wait and gets decremented
+everytime a thread approaches the semaphore wait.
+Also note that access to this counter should be protected with a mutex 
+
+Access to the function pointer or its public data does not need to be protected
+as it can only be changed under the protection of the semaphore used here
+
+Names:
+job: refers the job a user requests a thread for
+the mutex: refers to the mutex we're using to protect the busy thread counter
+the semaphore: refers to the semaphore that we're using to signal to threads

@@ -1,0 +1,9 @@
+This is a thread-pool that is to be used on UNIX systems instead of calling raw-threads.
+The objective is to minimize thread creation/deletion time and utilize the threads available in the pool.
+
+The pool is gonna be implemented to be callable from C, for the time being.
+
+The work is BSD-2 licensed.
+
+*For the requirments list: reqs.txt
+*For documentation on how the pool is implemented: doc.txt

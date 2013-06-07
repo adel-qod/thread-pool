@@ -1,0 +1,18 @@
+Functional:
+
+1- A user can create a pool with a static number of threads, at which point all threads are created and put to the idle-state, or a failure can happen.
+Failures can be: memory_allocation_failure OR thread_creation_failure
+2- A user may request a thread from the pool to perform a job, once the job is finished the thread returns to the idle state
+
+3- A user may not exit a thread using a call like pthread_exit, the behaivor of such case is still not specified 
+4- If the threads in the pool are exhausted and the user requests to start a new job, the request, as of the current edition, fails.
+
+
+Non-functional:
+1- Threads carry no priority, requesting a job will make the pool manager search for the first available idle thread.
+2- As of the current version, threads are run locally on the machine of the caller
+3- The threadpool works on an all-or-none basis, if it can't create all of the 
+	requested threads, it fails and deletes already created threads
+Future work:
+-Fix functional reqs 3 and 4 where 3 specifies a behaivor and 4 adds a new thread to the pool and then starts serving the user as requested
+-Allow threads to be run on varios hosts, possibly using RPC and acheiving load-balancing between the machines
