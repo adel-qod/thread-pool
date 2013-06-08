@@ -41,6 +41,8 @@ static pthread_mutex_t busyThreadsCountMutex;/* protects busyThreadsCount */
 this function pointer is used by threads to start the job they're given*/
 static void* (*jobFunctionPointer) (void *data);
 static void *data;/* the data which the user sends as a parameter to thread */
+
+static bool poolCreated = false;
 /* end pool related variables */
 
 
@@ -52,8 +54,11 @@ It may return any of the following  */
 #define INIT_OUT_OF_MEMORY 200
 #define INIT_CANT_CREATE_THREAD 300
 #define INIT_SYNC_FAILURE 400
+#define INIT_POOL_ALREADY_EXISTS 500
 int initThreadPool(unsigned int numberOfThreads)
 {
+	if(poolCreated == true)
+		return INIT_POOL_ALREADY_EXISTS;
 	threadPoolSize = numberOfThreads;
 	busyThreadsCount = 0;
 	threadsArray = malloc(numberOfThreads * sizeof(pthread_t));
@@ -75,14 +80,44 @@ int initThreadPool(unsigned int numberOfThreads)
 			/* kill already created threads */
 			for(unsigned j = 0; j < i; j++)
 				pthread_cancel(threadsArray[j]);
+			pthread_mutex_destroy(&busyThreadsCountMutex);
 			sem_destroy(&poolControlSemaphore);
 			free(threadsArray);
 			return INIT_CANT_CREATE_THREAD;
 		}	
 	}
+	poolCreated = true;
 	return INIT_SUCCESS;
 }
 /* End initThreadPool */
+
+/* begin destroyThreadPool */
+#define DESTROY_SUCCESS 100
+#define POOL_ISNT_CREATED 200
+#define MUTEX_DESTROY_FAILED 300
+#define SEM_DESTROY_FAILED 400
+int destroyThreadPool(void)
+{
+	if(poolCreated == false)
+		return POOL_ISNT_CREATED;
+	
+	if(pthread_mutex_destroy(&busyThreadsCountMutex) != 0)
+		return MUTEX_DESTROY_FAILED;
+	
+	if(sem_destroy(&poolControlSemaphore) < 0)
+		return SEM_DESTROY_FAILED;
+
+	for(unsigned int i = 0; i < threadPoolSize; i++)
+	{/* this fails only if the pthreads are not created
+		so no need to check for error */
+		pthread_cancel(threadsArray[i]);
+	}
+	free(threadsArray);
+	threadsArray = NULL;
+	poolCreated = false;
+	return DESTROY_SUCCESS;
+}
+/* end destroyThreadPool */
 
 /* begin startJob */
 #define START_JOB_SUCCESS 100
@@ -118,8 +153,8 @@ static void* waitingFunction(void *par)
 		if(sem_wait(&poolControlSemaphore) < 0)
 			continue;
 		/* Check the man pages for the pthread_mutex_lock
-		there's (ALMOST) 0 chance these functions may fail so 
-		there's no sense in checking their error codes */	
+		there's (ALMOST) 0 chance these functions may fail in the 
+		case here so there's no sense in checking their error codes */	
 
 		jobFunctionPointer(data);/* finish job and get back to pool */
 

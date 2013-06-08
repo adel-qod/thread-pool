@@ -47,5 +47,8 @@ int main(void)
 		}
 	}
 	sleep(100);
+	err = 0;
+	if((err = destroyThreadPool()) != DESTROY_SUCCESS)
+		printf("destroy failed..: %d\n",err );
 	return 0;
 }
