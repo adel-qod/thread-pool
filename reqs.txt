@@ -16,3 +16,6 @@ Non-functional:
 Future work:
 -Fix functional reqs 3 and 4 where 3 specifies a behaivor and 4 adds a new thread to the pool and then starts serving the user as requested
 -Allow threads to be run on varios hosts, possibly using RPC and acheiving load-balancing between the machines
+
+version 2.0:
+-It should allow the user to build variable number of pools
