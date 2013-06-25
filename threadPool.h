@@ -29,7 +29,8 @@ NO_AVAILABLE_THREADS if the pool has no idle threads to dispatch
 START_JOB_SYNC_FAILURE if pool had error in controlling its state */
 
 /* destroyThreadPool destroys an already created pool
-	You're strongly adviced to call this when you're sure all the threads */
+	You're strongly adviced to call this when you're sure all the threads
+	are idle */
 #define DESTROY_SUCCESS 100
 #define POOL_ISNT_CREATED 200
 #define MUTEX_DESTROY_FAILED 300
