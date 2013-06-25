@@ -12,7 +12,7 @@ When a user requests a job, they should send a function pointer and a parameter:
 	-We set a global function pointer to be the passed function pointer
 	-We set a gloabl void* pointer to equal the parameter passed
 	-We then icrement the semaphore by one, which will allow exactly one
-		blocking thread to go on
+		blocked thread to go on
 
 The blocking thread that was allowed to go on will simply call the global 
 function pointer and give it the global void* as a parameter, when this call is
